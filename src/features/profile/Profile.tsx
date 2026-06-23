@@ -17,6 +17,7 @@ export default function Profile() {
   const [tagline, setTagline] = useState(role === 'freelancer' ? 'Full Stack Developer & UI Designer' : 'Product Manager at TechCorp');
   const [bio, setBio] = useState(user?.bio || 'Passionate creator with 5+ years of experience building scalable web applications and intuitive user interfaces. I love turning complex problems into elegant solutions.');
   const [skills, setSkills] = useState<string[]>(user?.skills || ['React', 'TypeScript', 'Node.js', 'Figma', 'UI/UX Design', 'Tailwind CSS']);
+  const [newSkillText, setNewSkillText] = useState('');
   
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -199,7 +200,21 @@ export default function Profile() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Skills</CardTitle>
-                {isEditing && <Button variant="outline" size="sm">Add Skill</Button>}
+                {isEditing && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      const s = newSkillText.trim();
+                      if (s && !skills.includes(s)) {
+                        setSkills([...skills, s]);
+                        setNewSkillText('');
+                      }
+                    }}
+                  >
+                    Add Skill
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
@@ -219,12 +234,14 @@ export default function Profile() {
                       <Input 
                         placeholder="New skill..." 
                         className="w-40 h-8"
+                        value={newSkillText}
+                        onChange={(e) => setNewSkillText(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
-                            const newSkill = e.currentTarget.value.trim();
+                            const newSkill = newSkillText.trim();
                             if (newSkill && !skills.includes(newSkill)) {
                               setSkills([...skills, newSkill]);
-                              e.currentTarget.value = '';
+                              setNewSkillText('');
                             }
                           }
                         }}
