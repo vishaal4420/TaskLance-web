@@ -120,9 +120,9 @@ export default function Profile() {
           
           <div className="mb-4 hidden sm:block">
             {isEditing ? (
-              <Input value={name} onChange={(e) => setName(e.target.value)} className="font-display font-bold text-3xl bg-transparent border-none text-white px-0 focus-visible:ring-0" />
+              <Input value={name} onChange={(e) => setName(e.target.value)} className="font-display font-bold text-3xl bg-transparent border-none text-text-primary px-0 focus-visible:ring-0" />
             ) : (
-              <h1 className="text-3xl font-display font-bold text-white drop-shadow-md">{name}</h1>
+              <h1 className="text-3xl font-display font-bold text-text-primary">{name}</h1>
             )}
           </div>
         </div>
