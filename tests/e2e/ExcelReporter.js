@@ -316,9 +316,9 @@ export default class ExcelReporter {
   async onRunComplete(contexts, results) {
     const securityTestResults = results.testResults.filter(ts => ts.testFilePath.includes('security-analysis'));
     
-    // STRICT ISOLATION: Only include actual E2E spec files in the final E2E report!
+    // Include UI/UX, Unit, Functional, and Validation tests in the E2E report.
+    // Explicitly exclude load and security test outputs.
     const e2eTestResults = results.testResults.filter(ts => 
-      ts.testFilePath.includes('e2e') && 
       !ts.testFilePath.includes('security-analysis') && 
       !ts.testFilePath.includes('load-analysis')
     );
