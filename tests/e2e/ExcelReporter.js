@@ -302,14 +302,14 @@ export default class ExcelReporter {
       }
     }
 
-    const outputPath = path.resolve(process.cwd(), 'tests/e2e/artifacts/TaskLance_Final_Test_Report.xlsx');
+    const outputPath = path.resolve(process.cwd(), 'tests/e2e/artifacts/TaskLance_E2E_Test_Report.xlsx');
     const fs = await import('fs');
     if (!fs.existsSync(path.dirname(outputPath))) {
       fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     }
 
     await workbook.xlsx.writeFile(outputPath);
-    console.log(`\n📊 Excel Test Report generated at: ${outputPath}\n`);
+    console.log(`\n📊 E2E Test Report generated at: ${outputPath}\n`);
     console.log(`Deployable Status: ${isDeployable}\n`);
   }
 
