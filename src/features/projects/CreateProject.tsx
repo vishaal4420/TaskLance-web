@@ -25,7 +25,21 @@ export default function CreateProject() {
     deadline: ''
   });
 
-  const handleNext = () => setStep(s => Math.min(s + 1, 3));
+  const handleNext = () => {
+    if (step === 1) {
+      if (!formData.title.trim() || !formData.description.trim() || !formData.category.trim()) {
+        addToast('Please fill in title, description, and category before proceeding.', 'error');
+        return;
+      }
+    }
+    if (step === 2) {
+      if (!formData.budget || parseInt(formData.budget) <= 0) {
+        addToast('Please provide a valid estimated budget before proceeding.', 'error');
+        return;
+      }
+    }
+    setStep(s => Math.min(s + 1, 3));
+  };
   const handlePrev = () => setStep(s => Math.max(s - 1, 1));
 
   const handlePost = async () => {
