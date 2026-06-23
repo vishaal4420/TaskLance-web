@@ -315,16 +315,22 @@ export default class ExcelReporter {
 
   async onRunComplete(contexts, results) {
     const securityTestResults = results.testResults.filter(ts => ts.testFilePath.includes('security-analysis'));
-    const generalTestResults = results.testResults.filter(ts => !ts.testFilePath.includes('security-analysis'));
+    
+    // STRICT ISOLATION: Only include actual E2E spec files in the final E2E report!
+    const e2eTestResults = results.testResults.filter(ts => 
+      ts.testFilePath.includes('e2e') && 
+      !ts.testFilePath.includes('security-analysis') && 
+      !ts.testFilePath.includes('load-analysis')
+    );
 
     if (securityTestResults.length > 0) {
       const securityResultsObj = { ...results, testResults: securityTestResults };
       await this.generateSecurityReport(securityResultsObj);
     }
 
-    if (generalTestResults.length > 0) {
-      const generalResultsObj = { ...results, testResults: generalTestResults };
-      await this.generateGeneralReport(generalResultsObj);
+    if (e2eTestResults.length > 0) {
+      const e2eResultsObj = { ...results, testResults: e2eTestResults };
+      await this.generateGeneralReport(e2eResultsObj);
     }
   }
 }
