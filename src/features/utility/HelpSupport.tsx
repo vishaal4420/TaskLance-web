@@ -3,6 +3,8 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Search, ChevronDown, Mail } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/Card';
+import { useToast } from '../../context/ToastContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const faqs = [
   { q: 'How do I get paid?', a: 'TaskLance uses a secure Escrow system. Clients fund milestones upfront, and funds are released to you once the work is approved.' },
@@ -14,6 +16,24 @@ const faqs = [
 export default function HelpSupport() {
   const [searchQuery, setSearchQuery] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const { addToast } = useToast();
+  
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactSubject, setContactSubject] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactSubject.trim() || !contactMessage.trim()) return;
+    
+    // Simulate API call
+    setTimeout(() => {
+      addToast('Message sent! Our support team will get back to you shortly.', 'success');
+      setIsContactModalOpen(false);
+      setContactSubject('');
+      setContactMessage('');
+    }, 600);
+  };
 
   const filteredFaqs = faqs.filter(faq => 
     faq.q.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -73,14 +93,69 @@ export default function HelpSupport() {
                 <Mail className="w-6 h-6" />
               </div>
               <h3 className="font-semibold mb-2">Email Us</h3>
-              <p className="text-sm text-text-muted mb-4">Send us an email and we'll reply within 24h.</p>
-              <a href="mailto:support@tasklance.com" className="block w-full">
-                <Button variant="outline" className="w-full">Contact Support</Button>
-              </a>
+              <p className="text-sm text-text-muted mb-4">Send us a message and we'll reply within 24h.</p>
+              <Button variant="outline" className="w-full" onClick={() => setIsContactModalOpen(true)}>Contact Support</Button>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Contact Modal */}
+      <AnimatePresence>
+        {isContactModalOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+              onClick={() => setIsContactModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-50 p-4"
+            >
+              <div className="bg-surface border border-border-color rounded-2xl shadow-2xl p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-display font-semibold flex items-center gap-2">
+                    <Mail className="w-5 h-5 text-primary" /> Contact Support
+                  </h2>
+                  <button onClick={() => setIsContactModalOpen(false)} className="text-text-muted hover:text-text-primary">
+                    &times;
+                  </button>
+                </div>
+
+                <form onSubmit={handleContactSubmit} className="space-y-4">
+                  <Input
+                    label="Subject"
+                    value={contactSubject}
+                    onChange={(e) => setContactSubject(e.target.value)}
+                    required
+                    placeholder="What is this regarding?"
+                  />
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-text-primary ml-1">
+                      Message
+                    </label>
+                    <textarea
+                      required
+                      value={contactMessage}
+                      onChange={(e) => setContactMessage(e.target.value)}
+                      placeholder="Describe your issue in detail..."
+                      className="w-full bg-surface-2 border border-border-color rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-text-muted min-h-[120px] resize-y"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">
+                    Send Message
+                  </Button>
+                </form>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
