@@ -19,15 +19,19 @@ export default function Profile() {
   const [skills, setSkills] = useState<string[]>(user?.skills || ['React', 'TypeScript', 'Node.js', 'Figma', 'UI/UX Design', 'Tailwind CSS']);
   const [newSkillText, setNewSkillText] = useState('');
   
+  const [location, setLocation] = useState(user?.location || 'San Francisco, CA');
+  const [languages, setLanguages] = useState(user?.languages || 'English, Spanish');
+  const [joinedDate] = useState(user?.joinedDate || 'March 2024');
+  
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = async () => {
     setIsEditing(false);
     if (updateUser && user?.id) {
-      updateUser({ name, tagline, bio, skills });
+      updateUser({ name, tagline, bio, skills, location, languages });
       try {
-        await updateDoc(doc(db, 'users', user.id), { name, tagline, bio, skills });
+        await updateDoc(doc(db, 'users', user.id), { name, tagline, bio, skills, location, languages });
       } catch (err) {
         console.error('Failed to update profile in Firestore:', err);
       }
@@ -150,13 +154,23 @@ export default function Profile() {
               </div>
               
               <div className="flex items-center gap-3 text-sm text-text-muted">
-                <MapPin className="w-4 h-4" /> San Francisco, CA
+                <MapPin className="w-4 h-4 shrink-0" /> 
+                {isEditing ? (
+                  <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, Country" className="h-8 text-sm" />
+                ) : (
+                  <span>{location}</span>
+                )}
               </div>
               <div className="flex items-center gap-3 text-sm text-text-muted">
-                <Globe className="w-4 h-4" /> English, Spanish
+                <Globe className="w-4 h-4 shrink-0" /> 
+                {isEditing ? (
+                  <Input value={languages} onChange={(e) => setLanguages(e.target.value)} placeholder="English, Spanish" className="h-8 text-sm" />
+                ) : (
+                  <span>{languages}</span>
+                )}
               </div>
               <div className="flex items-center gap-3 text-sm text-text-muted">
-                <Calendar className="w-4 h-4" /> Joined March 2024
+                <Calendar className="w-4 h-4 shrink-0" /> Joined {joinedDate}
               </div>
 
               {role === 'freelancer' && (
