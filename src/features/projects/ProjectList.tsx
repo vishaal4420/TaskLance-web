@@ -50,7 +50,8 @@ export default function ProjectList() {
     
     const matchesTab = activeTab === 'All' || 
                        (tStatus === 'in progress' && pStatus === 'in-progress') ||
-                       (tStatus === 'open' && pStatus === 'open');
+                       (tStatus === 'open' && pStatus === 'open') ||
+                       (tStatus === 'completed' && pStatus === 'completed');
 
     // Advanced Filters
     const matchesBudgetType = filterState.budgetType === 'All' || project.budgetType === filterState.budgetType;
