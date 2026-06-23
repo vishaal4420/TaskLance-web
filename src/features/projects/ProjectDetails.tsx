@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
-import { getProject, getProposals, createProposal, acceptProposal, createChat, getProjectInvoices, createInvoice, payInvoice, createDeliverable, getProjectDeliverables, updateDeliverableStatus, uploadDeliverableFile, completeProject } from '../../lib/db';
+import { getProject, getProposals, createProposal, acceptProposal, createChat, getProjectInvoices, createInvoice, payInvoice, createDeliverable, getProjectDeliverables, updateDeliverableStatus, uploadDeliverableFile, completeProject, updateProjectDetails } from '../../lib/db';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Calendar, DollarSign, Users, FileText, Activity, Send, CheckCircle, Loader2, UploadCloud } from 'lucide-react';
@@ -42,6 +42,17 @@ export default function ProjectDetails() {
   const [deliverableDescription, setDeliverableDescription] = useState('');
   const [deliverableFiles, setDeliverableFiles] = useState<File[]>([]);
   const [isSubmittingDeliverable, setIsSubmittingDeliverable] = useState(false);
+
+  // Edit Project State
+  const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
+  const [editProjectData, setEditProjectData] = useState({
+    title: '',
+    description: '',
+    category: '',
+    budgetType: '',
+    budget: '',
+    skills: ''
+  });
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -241,6 +252,42 @@ export default function ProjectDetails() {
     }
   };
 
+  const handleOpenEditModal = () => {
+    if (!project) return;
+    setEditProjectData({
+      title: project.title || '',
+      description: project.description || '',
+      category: project.category || '',
+      budgetType: project.budgetType || '',
+      budget: project.budget || '',
+      skills: Array.isArray(project.skills) ? project.skills.join(', ') : ''
+    });
+    setIsEditProjectModalOpen(true);
+  };
+
+  const handleSaveProjectEdits = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!project) return;
+    
+    try {
+      const updates = {
+        title: editProjectData.title,
+        description: editProjectData.description,
+        category: editProjectData.category,
+        budgetType: editProjectData.budgetType,
+        budget: Number(editProjectData.budget),
+        skills: editProjectData.skills.split(',').map(s => s.trim()).filter(Boolean)
+      };
+      
+      await updateProjectDetails(project.id, updates);
+      setProject({ ...project, ...updates });
+      setIsEditProjectModalOpen(false);
+      addToast('Project details updated successfully!', 'success');
+    } catch (err: any) {
+      addToast(err.message || 'Failed to update project', 'error');
+    }
+  };
+
   const isAssignedToMe = project.freelancerId === user?.id;
   const hasSubmittedProposal = proposals.some(p => p.freelancerId === user?.id);
 
@@ -257,7 +304,7 @@ export default function ProjectDetails() {
           <p className="text-text-muted">{project.category} • Posted recently</p>
         </div>
         <div className="flex gap-3">
-          {role === 'client' && <Button variant="outline">Edit Project</Button>}
+          {role === 'client' && <Button variant="outline" onClick={handleOpenEditModal}>Edit Project</Button>}
           
           {role === 'client' && project.status === 'in-progress' && (
             <Button onClick={handleCompleteProject} className="gap-2 bg-success hover:bg-success/90">
@@ -748,6 +795,96 @@ export default function ProjectDetails() {
         title="Pay Invoice"
         description={payingInvoice?.description || 'Project Invoice'}
       />
+
+      {/* Edit Project Modal */}
+      <AnimatePresence>
+        {isEditProjectModalOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+              onClick={() => setIsEditProjectModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg z-50 p-4"
+            >
+              <Card className="shadow-2xl">
+                <CardHeader>
+                  <CardTitle>Edit Project</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSaveProjectEdits} className="space-y-4 max-h-[70vh] overflow-y-auto px-1 custom-scrollbar">
+                    <Input
+                      label="Project Title"
+                      value={editProjectData.title}
+                      onChange={(e) => setEditProjectData({ ...editProjectData, title: e.target.value })}
+                      required
+                    />
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-text-primary ml-1">
+                        Description
+                      </label>
+                      <textarea
+                        required
+                        value={editProjectData.description}
+                        onChange={(e) => setEditProjectData({ ...editProjectData, description: e.target.value })}
+                        className="w-full bg-surface-2 border border-border-color rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-text-muted min-h-[100px] resize-y"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Input
+                        label="Category"
+                        value={editProjectData.category}
+                        onChange={(e) => setEditProjectData({ ...editProjectData, category: e.target.value })}
+                        required
+                      />
+                      <Input
+                        label="Budget ($)"
+                        type="number"
+                        value={editProjectData.budget}
+                        onChange={(e) => setEditProjectData({ ...editProjectData, budget: e.target.value })}
+                        required
+                        min="1"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-text-primary ml-1">Budget Type</label>
+                        <select
+                          className="w-full bg-surface-2 border border-border-color rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                          value={editProjectData.budgetType}
+                          onChange={(e) => setEditProjectData({ ...editProjectData, budgetType: e.target.value })}
+                        >
+                          <option value="Fixed Price">Fixed Price</option>
+                          <option value="Hourly Rate">Hourly Rate</option>
+                        </select>
+                      </div>
+                      <Input
+                        label="Skills (comma separated)"
+                        value={editProjectData.skills}
+                        onChange={(e) => setEditProjectData({ ...editProjectData, skills: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex gap-3 pt-4 sticky bottom-0 bg-background">
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => setIsEditProjectModalOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" className="flex-1">
+                        Save Changes
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

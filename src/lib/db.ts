@@ -92,6 +92,10 @@ export async function completeProject(projectId: string) {
   });
 }
 
+export async function updateProjectDetails(projectId: string, updates: any) {
+  await updateDoc(doc(db, 'projects', projectId), updates);
+}
+
 export async function createChat(clientId: string, freelancerId: string, projectId: string, initialMessage: string) {
   const conversationsRef = collection(db, 'conversations');
   const chatDocRef = await addDoc(conversationsRef, {
