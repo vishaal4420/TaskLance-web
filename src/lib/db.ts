@@ -86,6 +86,12 @@ export async function acceptProposal(projectId: string, proposalId: string, free
   });
 }
 
+export async function completeProject(projectId: string) {
+  await updateDoc(doc(db, 'projects', projectId), {
+    status: 'completed'
+  });
+}
+
 export async function createChat(clientId: string, freelancerId: string, projectId: string, initialMessage: string) {
   const conversationsRef = collection(db, 'conversations');
   const chatDocRef = await addDoc(conversationsRef, {

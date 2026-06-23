@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
-import { getProject, getProposals, createProposal, acceptProposal, createChat, getProjectInvoices, createInvoice, payInvoice, createDeliverable, getProjectDeliverables, updateDeliverableStatus, uploadDeliverableFile } from '../../lib/db';
+import { getProject, getProposals, createProposal, acceptProposal, createChat, getProjectInvoices, createInvoice, payInvoice, createDeliverable, getProjectDeliverables, updateDeliverableStatus, uploadDeliverableFile, completeProject } from '../../lib/db';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Calendar, DollarSign, Users, FileText, Activity, Send, CheckCircle, Loader2, UploadCloud } from 'lucide-react';
@@ -230,6 +230,17 @@ export default function ProjectDetails() {
     }
   };
 
+  const handleCompleteProject = async () => {
+    if (!project) return;
+    try {
+      await completeProject(project.id);
+      setProject({ ...project, status: 'completed' });
+      addToast('Project marked as completed successfully!', 'success');
+    } catch (err: any) {
+      addToast(err.message || 'Failed to complete project', 'error');
+    }
+  };
+
   const isAssignedToMe = project.freelancerId === user?.id;
   const hasSubmittedProposal = proposals.some(p => p.freelancerId === user?.id);
 
@@ -247,6 +258,12 @@ export default function ProjectDetails() {
         </div>
         <div className="flex gap-3">
           {role === 'client' && <Button variant="outline">Edit Project</Button>}
+          
+          {role === 'client' && project.status === 'in-progress' && (
+            <Button onClick={handleCompleteProject} className="gap-2 bg-success hover:bg-success/90">
+              <CheckCircle className="w-4 h-4" /> Complete Project
+            </Button>
+          )}
           
           {role === 'freelancer' && isAssignedToMe && (
             <Button onClick={() => setIsDeliverableModalOpen(true)}>Submit Deliverable</Button>
