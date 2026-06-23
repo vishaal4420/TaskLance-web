@@ -12,6 +12,9 @@ interface User {
   bio?: string;
   tagline?: string;
   skills?: string[];
+  location?: string;
+  languages?: string;
+  joinedDate?: string;
   pushNotifs?: boolean;
   emailNotifs?: boolean;
   marketingNotifs?: boolean;
