@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Search, Filter, Plus, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProjectList() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,6 +31,13 @@ export default function ProjectList() {
     fetchProjects();
   }, []);
 
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [filterState, setFilterState] = useState({
+    minBudget: '',
+    maxBudget: '',
+    budgetType: 'All'
+  });
+
   const filteredProjects = projects.filter((project) => {
     // If client, only show their projects. If freelancer, show all.
     const isClientMatch = role === 'client' ? project.clientId === user?.id : true;
@@ -43,8 +51,14 @@ export default function ProjectList() {
     const matchesTab = activeTab === 'All' || 
                        (tStatus === 'in progress' && pStatus === 'in-progress') ||
                        (tStatus === 'open' && pStatus === 'open');
+
+    // Advanced Filters
+    const matchesBudgetType = filterState.budgetType === 'All' || project.budgetType === filterState.budgetType;
+    const pBudget = Number(project.budget) || 0;
+    const matchesMin = filterState.minBudget === '' || pBudget >= Number(filterState.minBudget);
+    const matchesMax = filterState.maxBudget === '' || pBudget <= Number(filterState.maxBudget);
                        
-    return isClientMatch && matchesSearch && matchesTab;
+    return isClientMatch && matchesSearch && matchesTab && matchesBudgetType && matchesMin && matchesMax;
   });
 
   return (
@@ -87,8 +101,11 @@ export default function ProjectList() {
               {tab}
             </button>
           ))}
-          <Button variant="outline" className="gap-2 shrink-0">
+          <Button variant="outline" className="gap-2 shrink-0" onClick={() => setIsFilterModalOpen(true)}>
             <Filter className="w-4 h-4" /> Filters
+            {(filterState.minBudget || filterState.maxBudget || filterState.budgetType !== 'All') && (
+              <span className="w-2 h-2 rounded-full bg-primary absolute top-0 right-0 -mt-1 -mr-1" />
+            )}
           </Button>
         </div>
       </div>
@@ -143,6 +160,91 @@ export default function ProjectList() {
           ))
         )}
       </div>
+
+      {/* Filter Modal */}
+      <AnimatePresence>
+        {isFilterModalOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+              onClick={() => setIsFilterModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, x: '100%' }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-full w-full max-w-sm bg-surface border-l border-border-color z-50 p-6 flex flex-col shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-display font-semibold flex items-center gap-2">
+                  <Filter className="w-5 h-5 text-primary" /> Advanced Filters
+                </h2>
+                <button onClick={() => setIsFilterModalOpen(false)} className="text-text-muted hover:text-text-primary p-2">
+                  &times;
+                </button>
+              </div>
+
+              <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-text-primary">Budget Type</label>
+                  <div className="flex flex-col gap-2">
+                    {['All', 'Fixed Price', 'Hourly Rate'].map(type => (
+                      <label key={type} className="flex items-center gap-3 p-3 rounded-xl border border-border-color cursor-pointer hover:bg-surface-2 transition-colors">
+                        <input
+                          type="radio"
+                          name="budgetType"
+                          checked={filterState.budgetType === type}
+                          onChange={() => setFilterState({ ...filterState, budgetType: type })}
+                          className="accent-primary w-4 h-4"
+                        />
+                        <span className="text-sm font-medium">{type}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-text-primary">Budget Range ($)</label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      placeholder="Min"
+                      value={filterState.minBudget}
+                      onChange={(e) => setFilterState({ ...filterState, minBudget: e.target.value })}
+                      min="0"
+                    />
+                    <span className="text-text-muted">-</span>
+                    <Input
+                      type="number"
+                      placeholder="Max"
+                      value={filterState.maxBudget}
+                      onChange={(e) => setFilterState({ ...filterState, maxBudget: e.target.value })}
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 mt-6 border-t border-border-color flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setFilterState({ minBudget: '', maxBudget: '', budgetType: 'All' })}
+                >
+                  Reset
+                </Button>
+                <Button className="flex-1" onClick={() => setIsFilterModalOpen(false)}>
+                  Apply Filters
+                </Button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
